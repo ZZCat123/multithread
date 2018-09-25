@@ -1,0 +1,45 @@
+为了更好的控制多线程，JDK提供了一套线程框架Executor，帮助开发人员有效地进行线程控制。
+它们都在java.util.concurrent包中，是JDK并发包的核心。
+Executors：它扮演线程工厂的角色，可以通过Executors创建特定功能的线程池
+Executors创建线程池的方法：
+    newFixedThreadPool()方法，该方法返回一个固定数量的线程池，该方法的线程数量始终不变，当一个任务提交时，若线程池中有空闲线程，则立即执行，若没有，则会进入任务队列等待有空闲的线程去执行。
+    newSingleThreadExecutor()方法，创建只有一个线程的线程池，若线程空闲则执行，若没有则进入任务队列，等待线程执行
+    newCachedThreadPool()方法，返回一个可根据实际情况调整线程个数的线程池，不会限制最大线程数量若用空间的线程去执行任务，若无任务则不创建线程。并且每个空闲线程会在60s后自动回收
+    newScheduledThreadPool()方法，该方法返回一个ScheduledExecutorService对象，但该线程池可以指定线程数量
+
+若Executors工厂类无法满足需求，可以创建自定义线程池
+其实Executors工厂类里面的创建线程池方法其实均是用了ThreadPoolExecutor类，通过这个类可以自定义线程池
+ThreadPoolExecutor构造方法：
+public ThreadPoolExecutor(int corePoolSize,
+                              int maximumPoolSize,
+                              long keepAliveTime,
+                              TimeUnit unit,
+                              BlockingQueue<Runnable> workQueue,
+                              ThreadFactory threadFactory,
+                              RejectedExecutionHandler handler)
+~corePoolSize:核心线程数，默认情况下核心线程会一直存活，即使处于闲置状态也不会受存keepAliveTime限制。除非将allowCoreThreadTimeOut设置为true。
+~maximumPoolSize:线程池所能容纳的最大线程数。超过这个数的线程将被阻塞。当任务队列为没有设置大小的LinkedBlockingDeque时，这个值无效。
+~keepAliveTime:非核心线程的闲置超时时间，超过这个时间就会被回收
+~unit:指定keepAliveTime的时间单位，如TimeUnit.SECONDS。当将allowCoreThreadTimeOut设置为true时对corePoolSize生效
+~workQueue:线程池中的任务队列，常用的有三种队列，SynchronousQueue,LinkedBlockingDeque,ArrayBlockingQueue。
+~threadFactory:线程工厂，提供创建新线程的功能。ThreadFactory是一个接口，只有一个方法
+              public interface ThreadFactory {
+                Thread newThread(Runnable r);
+              }
+              通过线程工厂可以对线程的一些属性进行定制。
+~handler:RejectedExecutionHandler也是一个接口，只有一个方法
+        public interface RejectedExecutionHandler {
+          void rejectedExecution(Runnable var1, ThreadPoolExecutor var2);
+        }
+        当线程池中的资源已经全部使用，添加新线程被拒绝时，会调用RejectedExecutionHandler的rejectedExecution方法.
+
+自定义线程池使用详细：
+使用上述构造方法对于队列是什么类型的比较关键：
+在使用有界队列时，若有新的任务需要执行，如果线程池是你线程数小于corePoolSize，则优先创建线程，若大于corePoolSize，则会将任务加入队列，若队列已满，则在总线程数不大于maximumPoolSize的前提下，创建新的线程，若线程数等于maximumPoolSize，则执行拒绝策略，或其他自定义方式
+在使用无界队列时：LinkedBlockingQueue，与有界队列相比，除非系统资源耗尽，否则无界队列不存在任务入队失败的情况。当有新任务到来，系统的线程数小于corePoolSize时，则新建线程执行任务，当达到corePoolSize后，就不会继续增加。若后续仍有新的任务加入，而没有空闲的线程资源，则任务直接进入队列等待。若任务创建和处理的速度差异很大，无界队列会保持快速增长，直到耗尽系统内存。
+JDK拒绝策略：（一般情况下不会选择下列四种策略！）
+    AbortPolicy：直接抛出异常阻止系统正常工作
+    CallerRunsPolicy：只要线程池未关闭，该策略直接在调用者线程中，运行当前被丢弃的任务
+    DiscardOldestPolicy：丢弃最老的一个请求，尝试再次提交当前任务
+    DiscardPolicy：丢弃无法处理的任务，不给予任何处理
+如果自定义拒绝策略可以实现RejectedExecutionHandler接口
