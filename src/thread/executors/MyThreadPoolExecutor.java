@@ -26,14 +26,13 @@ public class MyThreadPoolExecutor {
             int keepAliveTime, TimeUnit timeUnit,
             ArrayBlockingQueue<Runnable> arrayBlockingQueue,
             RejectedExecutionHandler handler) {
-        ThreadPoolExecutor pool = new ThreadPoolExecutor(
+        return new ThreadPoolExecutor(
                 corePoolSize,
                 maximumPoolSize,
                 keepAliveTime, timeUnit,
                 arrayBlockingQueue,
                 handler
         );
-        return pool;
     }
 
     /**
@@ -53,7 +52,7 @@ public class MyThreadPoolExecutor {
             TimeUnit timeUnit,
             LinkedBlockingQueue<Runnable> linkedBlockingQueue,
             RejectedExecutionHandler handler) {
-        ThreadPoolExecutor pool = new ThreadPoolExecutor(
+        return new ThreadPoolExecutor(
                 corePoolSize,
                 maximumPoolSize,
                 keepAliveTime,
@@ -61,7 +60,6 @@ public class MyThreadPoolExecutor {
                 linkedBlockingQueue,
                 handler
         );
-        return pool;
     }
 
     public static void main(String[] args) throws InterruptedException {
